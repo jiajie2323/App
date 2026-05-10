@@ -1,0 +1,2921 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>蝶翼舒适 App Demo V1</title>
+  <style>
+    :root {
+      --ink: #5a5360;
+      --muted: #8b828d;
+      --rose: #f4cfd4;
+      --peach: #f7dbc2;
+      --cream: #fff8ee;
+      --lavender: #e4dff5;
+      --mint: #dbeee6;
+      --gold: #f3ca75;
+      --panel: rgba(255, 255, 255, 0.58);
+      --line: rgba(111, 91, 104, 0.16);
+      --font-title: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+      --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-en: "Inter", "Helvetica Neue", Arial, sans-serif;
+      --home-poem-font: "LXGW WenKai", "霞鹜文楷", "STKaiti", "KaiTi", "Songti SC", serif;
+      --apple-ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", system-ui, sans-serif;
+      font-family: var(--apple-ui-font);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 18%, rgba(244, 207, 212, 0.48), transparent 32%),
+        radial-gradient(circle at 82% 15%, rgba(219, 238, 230, 0.58), transparent 34%),
+        radial-gradient(circle at 45% 92%, rgba(247, 219, 194, 0.62), transparent 36%),
+        linear-gradient(135deg, #fffaf4 0%, #f5f0f8 52%, #f7fbf7 100%);
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background:
+        radial-gradient(ellipse at 25% 45%, rgba(255,255,255,0.54), transparent 34%),
+        radial-gradient(ellipse at 72% 62%, rgba(255,255,255,0.34), transparent 36%);
+      filter: blur(22px);
+      animation: drift 12s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::after {
+      content: "";
+      position: absolute;
+      left: var(--ripple-x, 50%);
+      top: var(--ripple-y, 50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.68);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    button.ripple::after {
+      animation: ripple .58s ease-out;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(430px, 100vw);
+      height: min(932px, 100vh);
+      min-height: 720px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .screen {
+      display: none;
+      height: 100%;
+      animation: appear 0.5s ease both;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 44px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.48);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .quiet {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .home {
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      text-align: center;
+      padding-bottom: 40px;
+    }
+
+    .butterfly-stage {
+      position: relative;
+      width: 100%;
+      height: 360px;
+      display: grid;
+      place-items: center;
+      perspective: 760px;
+    }
+
+    .aura {
+      position: absolute;
+      width: 230px;
+      height: 210px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(247, 200, 118, 0.48), rgba(244, 207, 212, 0.18) 42%, transparent 70%);
+      filter: blur(12px);
+      animation: pulse 3.6s ease-in-out infinite;
+    }
+
+    .butterfly {
+      position: relative;
+      width: 288px;
+      height: 246px;
+      transform-style: preserve-3d;
+      animation: float 5s ease-in-out infinite;
+    }
+
+    .butterfly-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      filter: drop-shadow(0 26px 34px rgba(128, 106, 124, 0.12));
+    }
+
+    .svg-wing {
+      transform-box: fill-box;
+      transform-origin: center right;
+      animation: svg-flap-left 2.4s ease-in-out infinite;
+    }
+
+    .svg-wing.right {
+      transform-origin: center left;
+      animation-name: svg-flap-right;
+    }
+
+    .wing-fill {
+      fill: url(#wingWash);
+      stroke: rgba(255,255,255,.58);
+      stroke-width: 1.4;
+      stroke-linejoin: round;
+    }
+
+    .wing-rim {
+      fill: none;
+      stroke: rgba(255, 255, 255, .68);
+      stroke-width: 7;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      filter: url(#softRim);
+    }
+
+    .wing-line {
+      fill: none;
+      stroke: rgba(255,255,255,.64);
+      stroke-width: 1.6;
+      stroke-linecap: round;
+    }
+
+    .wing-glow {
+      fill: rgba(247, 203, 112, .26);
+      filter: blur(12px);
+    }
+
+    .wing-blush {
+      fill: rgba(244, 207, 212, .16);
+      filter: blur(10px);
+    }
+
+    .svg-body {
+      fill: url(#bodyWash);
+      stroke: rgba(255,255,255,.86);
+      stroke-width: 2;
+    }
+
+    .svg-antenna {
+      fill: none;
+      stroke: rgba(255,255,255,.84);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .svg-dot {
+      fill: rgba(255, 245, 214, .96);
+      filter: drop-shadow(0 0 8px rgba(243, 202, 117, .48));
+    }
+
+    .slogan-wrap {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      margin-top: -8px;
+    }
+
+    .slogan {
+      max-width: 380px;
+      font-family: var(--home-poem-font);
+      font-size: 22px;
+      line-height: 1.35;
+      letter-spacing: .04em;
+      font-weight: 500;
+      white-space: nowrap;
+      text-shadow: 0 8px 22px rgba(149, 119, 113, .13);
+    }
+
+    .slogan-en {
+      font-family: "Cormorant Garamond", "Times New Roman", serif;
+      font-size: 11px;
+      letter-spacing: .13em;
+      color: rgba(115, 103, 115, .68);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .primary {
+      width: 178px;
+      height: 52px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(255,255,255,0.76);
+      box-shadow: 0 14px 28px rgba(135, 111, 119, 0.14);
+      backdrop-filter: blur(16px);
+      margin-top: 12px;
+      font-family: var(--apple-ui-font);
+      font-weight: 600;
+      letter-spacing: .18em;
+    }
+
+    .guide {
+      padding-top: 10px;
+      font-family: var(--font-body);
+    }
+
+    .title {
+      margin: 28px 0 8px;
+      font-size: 25px;
+      line-height: 1.45;
+      font-family: var(--font-title);
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .voice .topbar .quiet {
+      font-family: var(--font-body);
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .tiny-butterflies {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.56;
+    }
+
+    .tiny-butterflies span {
+      position: absolute;
+      width: 28px;
+      height: 22px;
+    }
+
+    .tiny-butterflies span::before,
+    .tiny-butterflies span::after {
+      content: "";
+      position: absolute;
+      top: 5px;
+      width: 13px;
+      height: 14px;
+      background: transparent;
+      border: 1.5px solid rgba(255, 255, 255, 0.74);
+    }
+
+    .tiny-butterflies span::before {
+      left: 2px;
+      border-radius: 78% 22% 58% 42%;
+      transform: rotate(-18deg);
+    }
+
+    .tiny-butterflies span::after {
+      right: 2px;
+      border-radius: 22% 78% 42% 58%;
+      transform: rotate(18deg);
+    }
+
+    .tiny-butterflies span:nth-child(1) { left: 28px; top: 132px; transform: rotate(-12deg); }
+    .tiny-butterflies span:nth-child(2) { right: 36px; top: 84px; transform: rotate(16deg) scale(.82); }
+    .tiny-butterflies span:nth-child(3) { right: 82px; bottom: 224px; transform: rotate(-8deg) scale(.68); }
+
+    .moods {
+      position: relative;
+      height: 296px;
+      margin-top: 28px;
+      border-radius: 50%;
+    }
+
+    .flower {
+      position: relative;
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--size);
+      height: var(--size);
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 28% 24%, rgba(255,255,255,.82), transparent 20%),
+        radial-gradient(circle at 68% 74%, rgba(255,255,255,.28), transparent 34%),
+        linear-gradient(145deg, rgba(255,255,255,.42), var(--bubble));
+      border: 1px solid rgba(255, 255, 255, .62);
+      border-radius: 50%;
+      box-shadow:
+        inset 0 0 18px rgba(255,255,255,.32),
+        0 16px 30px rgba(126, 108, 122, .09);
+      backdrop-filter: blur(12px);
+      font-size: 15px;
+      font-family: var(--font-body);
+      font-weight: 400;
+      letter-spacing: .12em;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+    }
+
+    .flower::before {
+      content: none;
+    }
+
+    .flower:nth-child(1) { --x: 50%; --y: 8%; --size: 68px; --bubble: rgba(244, 207, 212, .34); }
+    .flower:nth-child(2) { --x: 82%; --y: 24%; --size: 72px; --bubble: rgba(219, 238, 230, .36); }
+    .flower:nth-child(3) { --x: 18%; --y: 25%; --size: 70px; --bubble: rgba(232, 226, 244, .38); }
+    .flower:nth-child(4) { --x: 50%; --y: 43%; --size: 76px; --bubble: rgba(247, 219, 194, .34); }
+    .flower:nth-child(5) { --x: 15%; --y: 62%; --size: 68px; --bubble: rgba(220, 236, 250, .34); }
+    .flower:nth-child(6) { --x: 84%; --y: 65%; --size: 68px; --bubble: rgba(246, 224, 236, .34); }
+    .flower:nth-child(7) { --x: 34%; --y: 88%; --size: 70px; --bubble: rgba(246, 229, 189, .36); }
+    .flower:nth-child(8) { --x: 68%; --y: 88%; --size: 72px; --bubble: rgba(226, 221, 241, .34); }
+
+    .flower.selected::before {
+      content: none;
+    }
+
+    .flower.selected {
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow:
+        inset 0 0 22px rgba(255,255,255,.42),
+        0 18px 34px rgba(126, 108, 122, .14),
+        0 0 0 2px rgba(255,255,255,.38);
+    }
+
+    .guide .flower {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.72), transparent 16%),
+        radial-gradient(circle at 72% 78%, rgba(255,255,255,.18), transparent 30%),
+        rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.58);
+      box-shadow:
+        inset 0 0 18px rgba(255,255,255,.22),
+        inset 0 -10px 20px rgba(255,255,255,.08),
+        0 14px 24px rgba(126,108,122,.06);
+      color: rgba(90,83,96,.78);
+      touch-action: none;
+      user-select: none;
+      will-change: left, top, transform;
+    }
+
+    .guide .flower.selected {
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.78), transparent 17%),
+        rgba(255,255,255,.18);
+      box-shadow:
+        inset 0 0 22px rgba(255,255,255,.32),
+        0 16px 30px rgba(126,108,122,.10),
+        0 0 0 1.5px rgba(255,255,255,.46);
+    }
+
+    .feedback {
+      min-height: 78px;
+      margin-top: 30px;
+      padding: 4px 12px;
+      border-radius: 0;
+      background: transparent;
+      border: 0;
+      backdrop-filter: none;
+      line-height: 1.7;
+      color: #756a74;
+      text-align: center;
+      font-family: var(--font-title);
+      font-size: 17px;
+      letter-spacing: .03em;
+    }
+
+    .bottom-actions {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding-bottom: 12px;
+    }
+
+    .small-action {
+      height: 58px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.30);
+      border: 1px solid rgba(255,255,255,0.58);
+      backdrop-filter: blur(12px);
+      color: rgba(90,83,96,.78);
+      font-size: 13px;
+      letter-spacing: .06em;
+      box-shadow: 0 12px 24px rgba(126,108,122,.06);
+    }
+
+    .soft-action {
+      height: 68px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: 0 14px 26px rgba(124,106,117,0.10);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 15px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      letter-spacing: .12em;
+    }
+
+    .controls {
+      gap: 10px;
+      overflow: auto;
+      padding-bottom: 8px;
+    }
+
+    .insight,
+    .sense {
+      padding-top: 10px;
+      gap: 16px;
+      overflow: auto;
+      padding-bottom: 8px;
+    }
+
+    .insight::-webkit-scrollbar,
+    .sense::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .soft-panel {
+      padding: 18px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.44);
+      border: 1px solid rgba(255,255,255,0.56);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 32px rgba(128,110,118,.08);
+    }
+
+    .insight-main {
+      min-height: 126px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      font-family: var(--font-title);
+      font-size: 20px;
+      line-height: 1.65;
+      color: #655c68;
+    }
+
+    .insight-main span {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .trend-row {
+      display: grid;
+      grid-template-columns: 82px 1fr 44px;
+      gap: 10px;
+      align-items: center;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #756a74;
+    }
+
+    .trend-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.48);
+      overflow: hidden;
+    }
+
+    .trend-fill {
+      height: 100%;
+      width: var(--w);
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(244,207,212,.72), rgba(247,203,112,.50));
+    }
+
+    .breath-stage {
+      height: 300px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .breath-circle {
+      width: 156px;
+      height: 156px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 30% 24%, rgba(255,255,255,.72), transparent 18%),
+        radial-gradient(circle, rgba(244,207,212,.26), rgba(219,238,230,.16) 62%, transparent 72%);
+      border: 1px solid rgba(255,255,255,.68);
+      box-shadow: inset 0 0 28px rgba(255,255,255,.34), 0 22px 42px rgba(126,108,122,.10);
+      font-family: var(--font-title);
+      color: #6c626e;
+      letter-spacing: .12em;
+    }
+
+    .breath-circle.active {
+      animation: breathe 8s ease-in-out infinite;
+    }
+
+    .sense-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .sense .soft-action {
+      height: 54px;
+    }
+
+    .voice {
+      align-items: center;
+      padding-top: 10px;
+    }
+
+    .voice .title {
+      width: 100%;
+      margin-top: 28px;
+      text-align: left;
+    }
+
+    .voice-orb {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      margin: 52px auto 26px;
+      display: grid;
+      place-items: center;
+    }
+
+    .voice-orb::before,
+    .voice-orb::after {
+      content: "";
+      position: absolute;
+      inset: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.58);
+      background: radial-gradient(circle, rgba(255,255,255,.34), rgba(244,207,212,.12) 54%, transparent 72%);
+      animation: voicePulse 3.2s ease-in-out infinite;
+    }
+
+    .voice-orb::after {
+      inset: 4px;
+      opacity: .56;
+      animation-delay: .8s;
+    }
+
+    .voice-orb.listening::before,
+    .voice-orb.listening::after {
+      animation-duration: 1.8s;
+    }
+
+    .voice-butterfly {
+      position: relative;
+      z-index: 1;
+      width: 150px;
+      height: 122px;
+      opacity: .92;
+    }
+
+    .voice-status {
+      min-height: 34px;
+      max-width: 310px;
+      text-align: center;
+      font-family: var(--font-title);
+      color: #6c626e;
+      font-size: 14px;
+      line-height: 1.7;
+      letter-spacing: .04em;
+    }
+
+    .voice-actions {
+      width: 100%;
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 12px;
+    }
+
+    .mic-button {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,.56);
+      border: 1px solid rgba(255,255,255,.74);
+      box-shadow: 0 18px 34px rgba(126,108,122,.12);
+      backdrop-filter: blur(16px);
+      color: #726775;
+    }
+
+    .mic-button svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .mic-button.listening {
+      background: rgba(244,207,212,.46);
+      box-shadow: 0 18px 34px rgba(126,108,122,.14), 0 0 0 8px rgba(255,255,255,.18);
+    }
+
+    .controls::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .device-mini {
+      height: 156px;
+      display: grid;
+      place-items: center;
+      margin-top: -78px;
+      margin-bottom: 12px;
+    }
+
+    .device-mini .butterfly {
+      transform: scale(.52);
+      animation: float-small 5s ease-in-out infinite;
+    }
+
+    .control-card {
+      padding: 14px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.54);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 16px 32px rgba(128, 110, 118, 0.09);
+    }
+
+    .control-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .control-head h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .value {
+      color: #b28c42;
+      font-size: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 76px 1fr 44px;
+      gap: 10px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 13px;
+      color: #756a74;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #e8b875;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .seg.two {
+      width: min(230px, 100%);
+      grid-template-columns: repeat(2, 1fr);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .seg button {
+      height: 38px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      color: #766b76;
+      font-family: var(--font-body);
+      font-weight: 600;
+      letter-spacing: .08em;
+    }
+
+    .seg button.on {
+      background: rgba(244, 207, 212, 0.58);
+      color: #5f5360;
+    }
+
+    .start-lube {
+      width: 100%;
+      height: 38px;
+      margin: 4px 0 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.58);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: 0 10px 20px rgba(124,106,117,0.08);
+      font-family: var(--apple-ui-font);
+      font-weight: 600;
+      letter-spacing: .14em;
+      color: #6e6370;
+    }
+
+    .start-lube.active {
+      background: rgba(219, 238, 230, 0.62);
+      color: #586c62;
+    }
+
+    .microcopy {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .nav-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+    }
+
+    .nav-dots span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(111, 91, 104, 0.22);
+    }
+
+    .nav-dots span.on {
+      width: 18px;
+      border-radius: 10px;
+      background: rgba(111, 91, 104, 0.42);
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(-1.5%, -1%, 0) rotate(0deg); }
+      to { transform: translate3d(1.5%, 1%, 0) rotate(3deg); }
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotateX(2deg); }
+      50% { transform: translateY(-12px) rotateX(-4deg); }
+    }
+
+    @keyframes float-small {
+      0%, 100% { transform: scale(.52) translateY(0); }
+      50% { transform: scale(.52) translateY(-10px); }
+    }
+
+    @keyframes flap-left {
+      0%, 100% { transform: rotateY(14deg) rotateZ(-2deg); }
+      50% { transform: rotateY(46deg) rotateZ(3deg); }
+    }
+
+    @keyframes flap-right {
+      0%, 100% { transform: rotateY(-14deg) rotateZ(2deg); }
+      50% { transform: rotateY(-46deg) rotateZ(-3deg); }
+    }
+
+    @keyframes flap-lower-left {
+      0%, 100% { transform: rotateY(10deg) rotateZ(-8deg); }
+      50% { transform: rotateY(32deg) rotateZ(-4deg); }
+    }
+
+    @keyframes flap-lower-right {
+      0%, 100% { transform: rotateY(-10deg) rotateZ(8deg); }
+      50% { transform: rotateY(-32deg) rotateZ(4deg); }
+    }
+
+    @keyframes svg-flap-left {
+      0%, 100% { transform: perspective(520px) rotateY(8deg) rotateZ(-1deg); }
+      50% { transform: perspective(520px) rotateY(34deg) rotateZ(2deg); }
+    }
+
+    @keyframes svg-flap-right {
+      0%, 100% { transform: perspective(520px) rotateY(-8deg) rotateZ(1deg); }
+      50% { transform: perspective(520px) rotateY(-34deg) rotateZ(-2deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .7; transform: scale(.96); }
+      50% { opacity: 1; transform: scale(1.08); }
+    }
+
+    @keyframes ripple {
+      0% { opacity: .62; transform: translate(-50%, -50%) scale(0); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(18); }
+    }
+
+    @keyframes voicePulse {
+      0%, 100% { transform: scale(.92); opacity: .48; }
+      50% { transform: scale(1.08); opacity: .86; }
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(.86); }
+      48%, 58% { transform: scale(1.18); }
+    }
+
+    @media (max-height: 760px) {
+      .app { min-height: 100vh; padding: 18px; }
+      .butterfly-stage { height: 296px; }
+      .moods { margin-top: 24px; gap: 12px; }
+      .flower { min-height: 82px; }
+      .feedback { margin-top: 18px; }
+      .device-mini { height: 132px; }
+      .device-mini .butterfly { transform: scale(.46); }
+    }
+  </style>
+<script>
+  (() => {
+    const NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!NativeAudioContext || NativeAudioContext.__butterflyVolumeBoosted) return;
+
+    class ButterflyAudioContext extends NativeAudioContext {
+      createGain() {
+        const node = super.createGain();
+        const audioParam = node.gain;
+        const boost = (value) => Math.min(Math.max(value * 1.65, 0), 0.95);
+        const setValueAtTime = audioParam.setValueAtTime.bind(audioParam);
+        const linearRampToValueAtTime = audioParam.linearRampToValueAtTime.bind(audioParam);
+        const exponentialRampToValueAtTime = audioParam.exponentialRampToValueAtTime.bind(audioParam);
+        audioParam.setValueAtTime = (value, time) => setValueAtTime(boost(value), time);
+        audioParam.linearRampToValueAtTime = (value, time) => linearRampToValueAtTime(boost(value), time);
+        audioParam.exponentialRampToValueAtTime = (value, time) => exponentialRampToValueAtTime(Math.max(boost(value), 0.0001), time);
+        return node;
+      }
+    }
+
+    ButterflyAudioContext.__butterflyVolumeBoosted = true;
+    window.AudioContext = ButterflyAudioContext;
+    window.webkitAudioContext = ButterflyAudioContext;
+  })();
+</script>
+<script>
+  (() => {
+    const nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+    if (!nativeFetch || window.__butterflyStaticDemoFetch) return;
+
+    const demoReplies = [
+      "我听见了  你可以先把呼吸放慢一点",
+      "今天不用急着整理答案  先允许身体安静一会儿",
+      "你说的感受很重要  可以从一个很小的动作开始照顾自己",
+      "也许此刻需要的不是用力改变  而是更温柔地靠近自己",
+      "我们可以慢一点  让身体先找到舒服的位置"
+    ];
+
+    const buildDemoReply = (text = "") => {
+      const seed = Array.from(String(text)).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      const reply = demoReplies[seed % demoReplies.length];
+      return {
+        reply,
+        text: reply,
+        content: reply,
+        message: reply,
+        demo: true
+      };
+    };
+
+    window.fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input?.url || "";
+      const isChatEndpoint = url === "/chat" || url.endsWith("/chat") || url.includes("/api/chat");
+      if (!isChatEndpoint) return nativeFetch(input, init);
+
+      try {
+        const response = await nativeFetch(input, init);
+        if (response.ok) return response;
+      } catch (error) {
+        // Static hosting has no backend chat endpoint, so keep the demo usable.
+      }
+
+      let userText = "";
+      try {
+        const body = init?.body ? JSON.parse(init.body) : {};
+        userText = body.message || body.text || body.prompt || "";
+      } catch (error) {
+        userText = "";
+      }
+
+      return new Response(JSON.stringify(buildDemoReply(userText)), {
+        status: 200,
+        headers: { "Content-Type": "application/json; charset=utf-8" }
+      });
+    };
+
+    window.__butterflyStaticDemoFetch = true;
+  })();
+</script>
+</head>
+<body>
+  <main class="app">
+    <section class="screen home active" data-screen="home">
+      <div class="butterfly-stage" aria-hidden="true">
+        <div class="aura"></div>
+        <div class="butterfly">
+          <svg class="butterfly-svg" viewBox="0 0 320 260" aria-hidden="true">
+            <defs>
+              <linearGradient id="wingWash" x1="20%" y1="10%" x2="90%" y2="100%">
+                <stop offset="0" stop-color="rgba(255,255,255,.72)" />
+                <stop offset=".48" stop-color="rgba(244,207,212,.24)" />
+                <stop offset="1" stop-color="rgba(219,238,230,.22)" />
+              </linearGradient>
+              <linearGradient id="bodyWash" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(255,255,255,.92)" />
+                <stop offset="1" stop-color="rgba(247,218,157,.74)" />
+              </linearGradient>
+              <filter id="softRim" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="0.45" />
+              </filter>
+            </defs>
+            <g class="svg-wing left">
+              <path class="wing-rim" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-rim" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <path class="wing-fill" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-fill" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <ellipse class="wing-glow" cx="111" cy="154" rx="48" ry="26" />
+              <ellipse class="wing-blush" cx="102" cy="104" rx="46" ry="32" />
+              <path class="wing-line" d="M153 118 C117 99 76 72 35 52" />
+              <path class="wing-line" d="M154 121 C112 119 70 111 29 92" />
+              <path class="wing-line" d="M153 135 C119 151 92 176 65 204" />
+              <path class="wing-line" d="M143 137 C122 174 113 198 105 218" />
+            </g>
+            <g class="svg-wing right">
+              <path class="wing-rim" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-rim" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <path class="wing-fill" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-fill" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <ellipse class="wing-glow" cx="209" cy="154" rx="48" ry="26" />
+              <ellipse class="wing-blush" cx="218" cy="104" rx="46" ry="32" />
+              <path class="wing-line" d="M167 118 C203 99 244 72 285 52" />
+              <path class="wing-line" d="M166 121 C208 119 250 111 291 92" />
+              <path class="wing-line" d="M167 135 C201 151 228 176 255 204" />
+              <path class="wing-line" d="M177 137 C198 174 207 198 215 218" />
+            </g>
+            <path class="svg-antenna" d="M154 67 C136 43 124 35 108 31" />
+            <path class="svg-antenna" d="M166 67 C184 43 196 35 212 31" />
+            <circle class="svg-dot" cx="106" cy="31" r="5" />
+            <circle class="svg-dot" cx="214" cy="31" r="5" />
+            <ellipse class="svg-body" cx="160" cy="78" rx="19" ry="17" />
+            <path class="svg-body" d="M144 88 C145 128 148 180 154 207 C156 216 164 216 166 207 C172 180 175 128 176 88 C166 96 154 96 144 88Z" />
+          </svg>
+        </div>
+      </div>
+      <div class="slogan-wrap">
+        <div class="slogan">听见身体的回声</div>
+        <div class="slogan-en">Listen softly to the body within</div>
+      </div>
+      <button class="primary" data-go="guide">开始</button>
+    </section>
+
+    <section class="screen guide" data-screen="guide">
+      <div class="tiny-butterflies" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="topbar">
+        <button class="icon-btn" data-go="home" aria-label="返回">‹</button>
+        <span class="quiet">今日感受</span>
+        <span class="icon-btn" aria-hidden="true">♡</span>
+      </div>
+      <h1 class="title">今天你想和你的身体聊聊吗？</h1>
+      <p class="quiet">选一个此刻最接近你的词。</p>
+      <div class="moods">
+        <button class="flower" data-mood="疲惫">疲惫</button>
+        <button class="flower" data-mood="紧张">紧张</button>
+        <button class="flower" data-mood="低落">低落</button>
+        <button class="flower" data-mood="想靠近">想靠近</button>
+        <button class="flower" data-mood="安静">安静</button>
+        <button class="flower" data-mood="敏感">敏感</button>
+        <button class="flower" data-mood="好奇">好奇</button>
+        <button class="flower" data-mood="需要独处">需要独处</button>
+      </div>
+      <div class="feedback" id="feedback">先让自己被轻轻听见</div>
+      <div class="bottom-actions">
+        <button class="small-action" data-go="voice" type="button">AI聊聊</button>
+        <button class="small-action" data-go="insight" type="button">情绪追踪</button>
+        <button class="small-action" data-go="sense" type="button">身体感知</button>
+        <button class="small-action" data-go="control" type="button">体验模式</button>
+      </div>
+    </section>
+
+    <section class="screen insight" data-screen="insight">
+      <div class="topbar">
+        <button class="icon-btn" data-go="guide" aria-label="返回">‹</button>
+        <span class="quiet">情绪追踪</span>
+        <span class="icon-btn" aria-hidden="true">♡</span>
+      </div>
+      <h1 class="title">最近的身体和心情</h1>
+      <p class="quiet">根据今日选择 对话和使用记录生成</p>
+      <article class="soft-panel insight-main">
+        <div id="insightSummary">今天还没有太多记录 先从一个感受开始</div>
+        <span id="insightHint">记录越多 反馈会越贴近你</span>
+      </article>
+      <article class="soft-panel">
+        <div class="control-head">
+          <h2>情绪波动</h2>
+          <span class="value" id="insightCount">0条</span>
+        </div>
+        <div class="trend-row"><span>放松感</span><div class="trend-track"><div class="trend-fill" id="relaxTrend" style="--w: 18%"></div></div><span id="relaxText">18%</span></div>
+        <div class="trend-row"><span>靠近感</span><div class="trend-track"><div class="trend-fill" id="closeTrend" style="--w: 18%"></div></div><span id="closeText">18%</span></div>
+        <div class="trend-row"><span>疲惫感</span><div class="trend-track"><div class="trend-fill" id="tiredTrend" style="--w: 18%"></div></div><span id="tiredText">18%</span></div>
+      </article>
+      <article class="soft-panel">
+        <div class="control-head">
+          <h2>温柔建议</h2>
+          <span class="value">今日</span>
+        </div>
+        <p class="microcopy" id="insightAdvice">先选择一个心情泡泡 或者和 AI 聊一句 我会在这里整理出更贴近你的反馈。</p>
+      </article>
+    </section>
+
+    <section class="screen sense" data-screen="sense">
+      <div class="topbar">
+        <button class="icon-btn" data-go="guide" aria-label="返回">‹</button>
+        <span class="quiet">身体感知</span>
+        <span class="icon-btn" aria-hidden="true">◌</span>
+      </div>
+      <h1 class="title">把注意力放回身体</h1>
+      <p class="quiet">呼吸训练和短冥想音频</p>
+      <div class="breath-stage">
+        <div class="breath-circle" id="breathCircle">呼吸</div>
+      </div>
+      <article class="soft-panel">
+        <div class="control-head">
+          <h2>四拍呼吸</h2>
+          <span class="value" id="breathState">未开始</span>
+        </div>
+        <p class="microcopy">跟随圆环慢慢吸气 停留 再慢慢呼气 让身体先知道这里是安全的。</p>
+      </article>
+      <div class="sense-actions">
+        <button class="soft-action" id="breathButton" type="button">开始呼吸</button>
+        <button class="soft-action" id="meditationButton" type="button">播放冥想</button>
+      </div>
+    </section>
+
+    <section class="screen voice" data-screen="voice">
+      <div class="topbar">
+        <button class="icon-btn" data-go="guide" aria-label="返回">‹</button>
+        <span class="quiet">AI聊聊</span>
+        <span class="icon-btn" aria-hidden="true">◌</span>
+      </div>
+      <h1 class="title">今天想轻轻说些什么</h1>
+      <p class="quiet" style="width:100%">我会听你说  不急着给答案</p>
+
+      <div class="voice-orb" id="voiceOrb" aria-hidden="true">
+        <div class="voice-butterfly">
+          <svg class="butterfly-svg" viewBox="0 0 320 260">
+            <defs>
+              <linearGradient id="wingWashVoice" x1="20%" y1="10%" x2="90%" y2="100%">
+                <stop offset="0" stop-color="rgba(255,255,255,.72)" />
+                <stop offset=".48" stop-color="rgba(244,207,212,.24)" />
+                <stop offset="1" stop-color="rgba(219,238,230,.22)" />
+              </linearGradient>
+              <linearGradient id="bodyWashVoice" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(255,255,255,.92)" />
+                <stop offset="1" stop-color="rgba(247,218,157,.74)" />
+              </linearGradient>
+              <filter id="softRimVoice" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="0.45" />
+              </filter>
+            </defs>
+            <g class="svg-wing left">
+              <path class="wing-rim" style="filter:url(#softRimVoice)" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-rim" style="filter:url(#softRimVoice)" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <path class="wing-fill" style="fill:url(#wingWashVoice)" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-fill" style="fill:url(#wingWashVoice)" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <ellipse class="wing-glow" cx="111" cy="154" rx="48" ry="26" />
+              <path class="wing-line" d="M153 118 C117 99 76 72 35 52" />
+              <path class="wing-line" d="M154 121 C112 119 70 111 29 92" />
+              <path class="wing-line" d="M153 135 C119 151 92 176 65 204" />
+            </g>
+            <g class="svg-wing right">
+              <path class="wing-rim" style="filter:url(#softRimVoice)" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-rim" style="filter:url(#softRimVoice)" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <path class="wing-fill" style="fill:url(#wingWashVoice)" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-fill" style="fill:url(#wingWashVoice)" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <ellipse class="wing-glow" cx="209" cy="154" rx="48" ry="26" />
+              <path class="wing-line" d="M167 118 C203 99 244 72 285 52" />
+              <path class="wing-line" d="M166 121 C208 119 250 111 291 92" />
+              <path class="wing-line" d="M167 135 C201 151 228 176 255 204" />
+            </g>
+            <path class="svg-antenna" d="M154 67 C136 43 124 35 108 31" />
+            <path class="svg-antenna" d="M166 67 C184 43 196 35 212 31" />
+            <circle class="svg-dot" cx="106" cy="31" r="5" />
+            <circle class="svg-dot" cx="214" cy="31" r="5" />
+            <ellipse class="svg-body" style="fill:url(#bodyWashVoice)" cx="160" cy="78" rx="19" ry="17" />
+            <path class="svg-body" style="fill:url(#bodyWashVoice)" d="M144 88 C145 128 148 180 154 207 C156 216 164 216 166 207 C172 180 175 128 176 88 C166 96 154 96 144 88Z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="voice-status" id="voiceStatus"></div>
+      <div class="voice-actions">
+        <button class="mic-button" id="talkButton" type="button" aria-label="开始说话">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3Z" />
+            <path d="M5 11a7 7 0 0 0 14 0" />
+            <path d="M12 18v3" />
+            <path d="M9 21h6" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="screen controls" data-screen="control">
+      <div class="topbar">
+        <button class="icon-btn" data-go="guide" aria-label="返回">‹</button>
+        <span class="quiet">身体舒适模式</span>
+        <span class="icon-btn" aria-hidden="true">↻</span>
+      </div>
+      <div class="device-mini" aria-hidden="true">
+        <div class="butterfly">
+          <svg class="butterfly-svg" viewBox="0 0 320 260" aria-hidden="true">
+            <defs>
+              <linearGradient id="wingWashMini" x1="20%" y1="10%" x2="90%" y2="100%">
+                <stop offset="0" stop-color="rgba(255,255,255,.72)" />
+                <stop offset=".48" stop-color="rgba(244,207,212,.24)" />
+                <stop offset="1" stop-color="rgba(219,238,230,.22)" />
+              </linearGradient>
+              <linearGradient id="bodyWashMini" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="rgba(255,255,255,.92)" />
+                <stop offset="1" stop-color="rgba(247,218,157,.74)" />
+              </linearGradient>
+              <filter id="softRimMini" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="0.45" />
+              </filter>
+            </defs>
+            <g class="svg-wing left">
+              <path class="wing-rim" style="filter:url(#softRimMini)" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-rim" style="filter:url(#softRimMini)" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <path class="wing-fill" style="fill:url(#wingWashMini)" d="M155 116 C124 58 88 23 38 34 C9 40 7 75 29 103 C56 138 103 137 155 116Z" />
+              <path class="wing-fill" style="fill:url(#wingWashMini)" d="M154 130 C113 132 82 154 59 204 C91 226 138 205 158 138Z" />
+              <ellipse class="wing-glow" cx="111" cy="154" rx="48" ry="26" />
+              <ellipse class="wing-blush" cx="102" cy="104" rx="46" ry="32" />
+              <path class="wing-line" d="M153 118 C117 99 76 72 35 52" />
+              <path class="wing-line" d="M154 121 C112 119 70 111 29 92" />
+              <path class="wing-line" d="M153 135 C119 151 92 176 65 204" />
+              <path class="wing-line" d="M143 137 C122 174 113 198 105 218" />
+            </g>
+            <g class="svg-wing right">
+              <path class="wing-rim" style="filter:url(#softRimMini)" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-rim" style="filter:url(#softRimMini)" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <path class="wing-fill" style="fill:url(#wingWashMini)" d="M165 116 C196 58 232 23 282 34 C311 40 313 75 291 103 C264 138 217 137 165 116Z" />
+              <path class="wing-fill" style="fill:url(#wingWashMini)" d="M166 130 C207 132 238 154 261 204 C229 226 182 205 162 138Z" />
+              <ellipse class="wing-glow" cx="209" cy="154" rx="48" ry="26" />
+              <ellipse class="wing-blush" cx="218" cy="104" rx="46" ry="32" />
+              <path class="wing-line" d="M167 118 C203 99 244 72 285 52" />
+              <path class="wing-line" d="M166 121 C208 119 250 111 291 92" />
+              <path class="wing-line" d="M167 135 C201 151 228 176 255 204" />
+              <path class="wing-line" d="M177 137 C198 174 207 198 215 218" />
+            </g>
+            <path class="svg-antenna" d="M154 67 C136 43 124 35 108 31" />
+            <path class="svg-antenna" d="M166 67 C184 43 196 35 212 31" />
+            <circle class="svg-dot" cx="106" cy="31" r="5" />
+            <circle class="svg-dot" cx="214" cy="31" r="5" />
+            <ellipse class="svg-body" style="fill:url(#bodyWashMini)" cx="160" cy="78" rx="19" ry="17" />
+            <path class="svg-body" style="fill:url(#bodyWashMini)" d="M144 88 C145 128 148 180 154 207 C156 216 164 216 166 207 C172 180 175 128 176 88 C166 96 154 96 144 88Z" />
+          </svg>
+        </div>
+      </div>
+
+      <article class="control-card">
+        <div class="control-head">
+          <h2>中央区</h2>
+          <span class="value" id="centerValue">38°C · 2级</span>
+        </div>
+        <div class="row"><span>温控</span><input id="centerTemp" type="range" min="36" max="40" value="38" /><span id="centerTempText">38°C</span></div>
+        <div class="row"><span>按摩</span><input id="centerVibe" type="range" min="0" max="5" value="2" /><span id="centerVibeText">2级</span></div>
+        <div class="seg" data-group="centerMode">
+          <button data-temp="38" data-vibe="2">舒缓</button><button data-temp="39" data-vibe="3">波浪</button><button data-temp="37" data-vibe="1">深呼吸</button>
+        </div>
+        <p class="microcopy">推荐模式会自动匹配温控和按摩档位，也可以手动拖动微调。</p>
+      </article>
+
+      <article class="control-card">
+        <div class="control-head">
+          <h2>触角区</h2>
+          <span class="value" id="lubeValue">缓释 1级</span>
+        </div>
+        <div class="row"><span>润滑</span><input id="lube" type="range" min="0" max="3" value="1" /><span id="lubeText">1级</span></div>
+        <div class="seg two" data-group="lubeMode">
+          <button>点按</button><button>持续缓释</button>
+        </div>
+        <p class="microcopy">润滑胶囊为可替换设计，建议仅使用水基兼容配方。</p>
+      </article>
+
+      <article class="control-card">
+        <div class="control-head">
+          <h2>双翼区</h2>
+          <span class="value" id="wingValue">松紧 2 · 37°C</span>
+        </div>
+        <div class="row"><span>松紧</span><input id="tight" type="range" min="0" max="5" value="2" /><span id="tightText">2级</span></div>
+        <div class="row"><span>震动</span><input id="wingVibe" type="range" min="0" max="5" value="1" /><span id="wingVibeText">1级</span></div>
+        <div class="row"><span>温控</span><input id="wingTemp" type="range" min="36" max="40" value="37" /><span id="wingTempText">37°C</span></div>
+        <div class="seg" data-group="wingMode">
+          <button>同步</button><button>交替</button><button>轻拍</button>
+        </div>
+      </article>
+    </section>
+
+    <div class="nav-dots" aria-hidden="true"><span class="on"></span><span></span><span></span></div>
+  </main>
+
+  <script>
+    const screens = [...document.querySelectorAll(".screen")];
+    const dots = [...document.querySelectorAll(".nav-dots span")];
+    const order = ["home", "guide", "voice", "control"];
+
+    function show(name) {
+      screens.forEach((screen) => screen.classList.toggle("active", screen.dataset.screen === name));
+      dots.forEach((dot, index) => dot.classList.toggle("on", order[index] === name));
+      if (name === "guide") {
+        requestAnimationFrame(() => {
+          initBubbles();
+          for (let step = 0; step < 120; step += 1) {
+            separateBubbles(moodArea.clientWidth, moodArea.clientHeight, 1);
+          }
+          bubbles.forEach((bubble) => {
+            bubble.el.style.left = `${bubble.x}px`;
+            bubble.el.style.top = `${bubble.y}px`;
+          });
+        });
+      }
+    }
+
+    document.querySelectorAll("[data-go]").forEach((button) => {
+      button.addEventListener("click", () => show(button.dataset.go));
+    });
+
+    document.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("pointerdown", (event) => {
+        const rect = button.getBoundingClientRect();
+        button.style.setProperty("--ripple-x", `${event.clientX - rect.left}px`);
+        button.style.setProperty("--ripple-y", `${event.clientY - rect.top}px`);
+        button.classList.remove("ripple");
+        void button.offsetWidth;
+        button.classList.add("ripple");
+      });
+    });
+
+    const feedbacks = {
+      "疲惫": "把一点温热留给自己",
+      "紧张": "慢一点也很好",
+      "低落": "今天可以先不用变好",
+      "想靠近": "靠近从放松开始",
+      "安静": "听见自己的呼吸",
+      "敏感": "更轻一点更慢一点",
+      "好奇": "用自己的节奏探索",
+      "需要独处": "把空间还给自己"
+    };
+
+    function readLog() {
+      try {
+        return JSON.parse(localStorage.getItem("butterflyWellnessLog") || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function logEvent(type, value) {
+      const log = readLog();
+      log.push({ type, value, time: Date.now() });
+      localStorage.setItem("butterflyWellnessLog", JSON.stringify(log.slice(-80)));
+      updateInsight();
+    }
+
+    function updateInsight() {
+      const log = readLog();
+      const moods = log.filter((item) => item.type === "mood").map((item) => item.value);
+      const chats = log.filter((item) => item.type === "chat").length;
+      const bodyUses = log.filter((item) => item.type === "body").length;
+      const lastMood = moods.at(-1);
+      const tired = moods.filter((mood) => ["疲惫", "紧张", "低落", "需要独处"].includes(mood)).length;
+      const close = moods.filter((mood) => ["想靠近", "好奇", "安静"].includes(mood)).length + bodyUses;
+      const relax = moods.filter((mood) => ["安静", "好奇"].includes(mood)).length + bodyUses + chats;
+      const total = Math.max(1, moods.length + bodyUses + chats);
+      const pct = (value) => Math.min(92, Math.max(18, Math.round(value / total * 100)));
+      const relaxPct = pct(relax);
+      const closePct = pct(close);
+      const tiredPct = pct(tired);
+
+      const summary = document.getElementById("insightSummary");
+      const hint = document.getElementById("insightHint");
+      const count = document.getElementById("insightCount");
+      const advice = document.getElementById("insightAdvice");
+      if (!summary) return;
+
+      count.textContent = `${log.length}条`;
+      document.getElementById("relaxTrend").style.setProperty("--w", `${relaxPct}%`);
+      document.getElementById("closeTrend").style.setProperty("--w", `${closePct}%`);
+      document.getElementById("tiredTrend").style.setProperty("--w", `${tiredPct}%`);
+      document.getElementById("relaxText").textContent = `${relaxPct}%`;
+      document.getElementById("closeText").textContent = `${closePct}%`;
+      document.getElementById("tiredText").textContent = `${tiredPct}%`;
+
+      if (!log.length) {
+        summary.textContent = "今天还没有太多记录 先从一个感受开始";
+        hint.textContent = "记录越多 反馈会越贴近你";
+        advice.textContent = "先选择一个心情泡泡 或者和 AI 聊一句 我会在这里整理出更贴近你的反馈。";
+        return;
+      }
+
+      summary.textContent = lastMood
+        ? `今天你靠近了 ${lastMood} 这个感受`
+        : "今天你已经开始留意自己的身体";
+      hint.textContent = chats ? `你和 AI 说过 ${chats} 次话` : "还没有语音记录";
+      advice.textContent = tiredPct > closePct
+        ? "今晚适合短一点 慢一点 先照顾疲惫"
+        : "身体正在慢慢打开 可以保持轻柔的节奏";
+    }
+
+    const moodArea = document.querySelector(".guide .moods");
+    const moodButtons = [...document.querySelectorAll(".guide .flower")];
+    const bubbles = [];
+    let draggedBubble = null;
+    let movedBubble = false;
+
+    function selectMood(button) {
+      moodButtons.forEach((item) => item.classList.remove("selected"));
+      button.classList.add("selected");
+      document.getElementById("feedback").textContent = feedbacks[button.dataset.mood];
+      logEvent("mood", button.dataset.mood);
+    }
+
+    function initBubbles() {
+      const areaRect = moodArea.getBoundingClientRect();
+      const width = moodArea.clientWidth;
+      const height = moodArea.clientHeight;
+      if (!width || !height) return;
+      bubbles.length = 0;
+      moodButtons.forEach((button) => {
+        const rect = button.getBoundingClientRect();
+        const radius = rect.width / 2;
+        const bubble = {
+          el: button,
+          r: radius,
+          x: rect.left - areaRect.left + radius,
+          y: rect.top - areaRect.top + radius,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35,
+          pointerId: null,
+          offsetX: 0,
+          offsetY: 0
+        };
+        button.style.left = `${bubble.x}px`;
+        button.style.top = `${bubble.y}px`;
+        bubbles.push(bubble);
+      });
+      for (let step = 0; step < 80; step += 1) {
+        separateBubbles(width, height, 1);
+      }
+      bubbles.forEach((bubble) => {
+        bubble.el.style.left = `${bubble.x}px`;
+        bubble.el.style.top = `${bubble.y}px`;
+      });
+    }
+
+    function keepInsideCircle(bubble, width, height) {
+      const cx = width / 2;
+      const cy = height / 2;
+      const boundary = Math.min(width, height) / 2 - bubble.r - 4;
+      const dx = bubble.x - cx;
+      const dy = bubble.y - cy;
+      const distance = Math.hypot(dx, dy) || 1;
+      if (distance > boundary) {
+        const nx = dx / distance;
+        const ny = dy / distance;
+        bubble.x = cx + nx * boundary;
+        bubble.y = cy + ny * boundary;
+        const push = bubble.vx * nx + bubble.vy * ny;
+        bubble.vx -= 1.8 * push * nx;
+        bubble.vy -= 1.8 * push * ny;
+      }
+    }
+
+    function constrainBubblePosition(bubble, nextX, nextY) {
+      const gap = 16;
+      let x = nextX;
+      let y = nextY;
+      for (let step = 0; step < 10; step += 1) {
+        bubbles.forEach((other) => {
+          if (other === bubble) return;
+          const dx = x - other.x;
+          const dy = y - other.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          const minDistance = bubble.r + other.r + gap;
+          if (distance < minDistance) {
+            const nx = dx / distance;
+            const ny = dy / distance;
+            x = other.x + nx * minDistance;
+            y = other.y + ny * minDistance;
+            other.vx -= nx * 0.16;
+            other.vy -= ny * 0.16;
+          }
+        });
+      }
+      const width = moodArea.clientWidth;
+      const height = moodArea.clientHeight;
+      const cx = width / 2;
+      const cy = height / 2;
+      const boundary = Math.min(width, height) / 2 - bubble.r - 4;
+      const dx = x - cx;
+      const dy = y - cy;
+      const distance = Math.hypot(dx, dy) || 1;
+      if (distance > boundary) {
+        x = cx + (dx / distance) * boundary;
+        y = cy + (dy / distance) * boundary;
+      }
+      return { x, y };
+    }
+
+    function separateBubbles(width, height, strength = 0.5) {
+      const gap = 16;
+      for (let i = 0; i < bubbles.length; i += 1) {
+        for (let j = i + 1; j < bubbles.length; j += 1) {
+          const a = bubbles[i];
+          const b = bubbles[j];
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          const minDistance = a.r + b.r + gap;
+          if (distance < minDistance) {
+            const nx = dx / distance;
+            const ny = dy / distance;
+            const overlap = (minDistance - distance) / 2 * strength;
+            if (a !== draggedBubble) {
+              a.x -= nx * overlap;
+              a.y -= ny * overlap;
+            }
+            if (b !== draggedBubble) {
+              b.x += nx * overlap;
+              b.y += ny * overlap;
+            }
+            a.vx -= nx * 0.025;
+            a.vy -= ny * 0.025;
+            b.vx += nx * 0.025;
+            b.vy += ny * 0.025;
+          }
+        }
+      }
+      bubbles.forEach((bubble) => keepInsideCircle(bubble, width, height));
+    }
+
+    function tickBubbles() {
+      if (!moodArea || bubbles.length === 0) {
+        requestAnimationFrame(tickBubbles);
+        return;
+      }
+      const width = moodArea.clientWidth;
+      const height = moodArea.clientHeight;
+
+      bubbles.forEach((bubble) => {
+        if (bubble !== draggedBubble) {
+          bubble.x += bubble.vx;
+          bubble.y += bubble.vy;
+          bubble.vx *= 0.985;
+          bubble.vy *= 0.985;
+          bubble.vx += (Math.random() - 0.5) * 0.012;
+          bubble.vy += (Math.random() - 0.5) * 0.012;
+        }
+        keepInsideCircle(bubble, width, height);
+      });
+
+      for (let step = 0; step < 7; step += 1) {
+        separateBubbles(width, height, 0.95);
+      }
+
+      bubbles.forEach((bubble) => {
+        bubble.el.style.left = `${bubble.x}px`;
+        bubble.el.style.top = `${bubble.y}px`;
+      });
+
+      requestAnimationFrame(tickBubbles);
+    }
+
+    moodButtons.forEach((button) => {
+      button.addEventListener("pointerdown", (event) => {
+        const bubble = bubbles.find((item) => item.el === button);
+        if (!bubble) return;
+        draggedBubble = bubble;
+        movedBubble = false;
+        bubble.pointerId = event.pointerId;
+        const areaRect = moodArea.getBoundingClientRect();
+        bubble.offsetX = event.clientX - areaRect.left - bubble.x;
+        bubble.offsetY = event.clientY - areaRect.top - bubble.y;
+        button.setPointerCapture(event.pointerId);
+        selectMood(button);
+      });
+
+      button.addEventListener("pointermove", (event) => {
+        const bubble = bubbles.find((item) => item.el === button);
+        if (!bubble || draggedBubble !== bubble || bubble.pointerId !== event.pointerId) return;
+        const areaRect = moodArea.getBoundingClientRect();
+        const rawX = event.clientX - areaRect.left - bubble.offsetX;
+        const rawY = event.clientY - areaRect.top - bubble.offsetY;
+        const next = constrainBubblePosition(bubble, rawX, rawY);
+        const nextX = next.x;
+        const nextY = next.y;
+        bubble.vx = (nextX - bubble.x) * 0.24;
+        bubble.vy = (nextY - bubble.y) * 0.24;
+        if (Math.hypot(nextX - bubble.x, nextY - bubble.y) > 1.5) movedBubble = true;
+        bubble.x = nextX;
+        bubble.y = nextY;
+      });
+
+      button.addEventListener("pointerup", (event) => {
+        const bubble = bubbles.find((item) => item.el === button);
+        if (!bubble || bubble.pointerId !== event.pointerId) return;
+        bubble.pointerId = null;
+        draggedBubble = null;
+        if (!movedBubble) selectMood(button);
+      });
+    });
+
+    window.addEventListener("resize", initBubbles);
+    requestAnimationFrame(() => {
+      initBubbles();
+      tickBubbles();
+    });
+
+    document.querySelectorAll(".seg").forEach((group) => {
+      group.addEventListener("click", (event) => {
+        if (event.target.tagName !== "BUTTON") return;
+        const alreadyOn = event.target.classList.contains("on");
+        group.querySelectorAll("button").forEach((button) => button.classList.remove("on"));
+        if (!alreadyOn) {
+          event.target.classList.add("on");
+          if (["centerMode", "lubeMode", "wingMode"].includes(group.dataset.group)) {
+            logEvent("body", `${group.dataset.group}:${event.target.textContent.trim()}`);
+          }
+        }
+        if (group.dataset.group === "centerMode") {
+          if (!alreadyOn) {
+            document.getElementById("centerTemp").value = event.target.dataset.temp;
+            document.getElementById("centerVibe").value = event.target.dataset.vibe;
+            document.getElementById("centerTempText").textContent = `${event.target.dataset.temp}°C`;
+            document.getElementById("centerVibeText").textContent = `${event.target.dataset.vibe}级`;
+            updateCenter();
+          }
+        }
+      });
+    });
+
+    const talkButton = document.getElementById("talkButton");
+    const voiceStatus = document.getElementById("voiceStatus");
+    const voiceOrb = document.getElementById("voiceOrb");
+    let recognition = null;
+    let listening = false;
+    let speaking = false;
+    let preferredVoice = null;
+
+    const voiceEndpoint = window.location.protocol === "file:"
+      ? "http://localhost:3000/chat"
+      : "/chat";
+
+    function setVoiceState(text, active = false) {
+      voiceStatus.textContent = text;
+      voiceOrb?.classList.toggle("listening", active);
+      talkButton?.classList.toggle("listening", active);
+    }
+
+    function updatePreferredVoice() {
+      const voices = window.speechSynthesis?.getVoices?.() || [];
+      const zhVoices = voices.filter((voice) => /zh|cmn|Chinese|中文|普通话/i.test(`${voice.lang} ${voice.name}`));
+      const preferredNames = [
+        "Xiaoxiao",
+        "Xiaoyi",
+        "Tingting",
+        "Huihui",
+        "Yaoyao",
+        "Meijia",
+        "Google 普通话",
+        "Google Mandarin",
+        "Microsoft"
+      ];
+      preferredVoice = preferredNames
+        .map((name) => zhVoices.find((voice) => voice.name.includes(name)))
+        .find(Boolean) || zhVoices[0] || voices[0] || null;
+    }
+
+    updatePreferredVoice();
+    window.speechSynthesis?.addEventListener?.("voiceschanged", updatePreferredVoice);
+
+    function stopSpeechReply() {
+      speaking = false;
+      window.speechSynthesis?.cancel();
+      setVoiceState("已停下", false);
+    }
+
+    function speakReply(text) {
+      window.speechSynthesis?.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "zh-CN";
+      utterance.voice = preferredVoice;
+      utterance.rate = 0.82;
+      utterance.pitch = 1.08;
+      utterance.volume = 0.92;
+      utterance.onstart = () => {
+        speaking = true;
+        setVoiceState("正在回应  点麦克风可停止", true);
+      };
+      utterance.onend = () => {
+        speaking = false;
+        setVoiceState("我在这里", false);
+      };
+      utterance.onerror = () => {
+        speaking = false;
+        setVoiceState("朗读被中止", false);
+      };
+      window.speechSynthesis?.speak(utterance);
+    }
+
+    async function askDeepSeek(text) {
+      setVoiceState("正在想一想", true);
+      logEvent("chat", text);
+      const response = await fetch(voiceEndpoint, {
+        method: "POST",
+        body: JSON.stringify({ message: text }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(detail || "DeepSeek 连接失败");
+      }
+      const data = await response.json();
+      speakReply(data.reply || "我在这里 可以慢慢说");
+    }
+
+    function stopVoiceAgent() {
+      listening = false;
+      recognition?.stop();
+      speaking = false;
+      window.speechSynthesis?.cancel();
+      setVoiceState("", false);
+    }
+
+    function startVoiceAgent() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setVoiceState("当前浏览器不支持语音识别 请用 Chrome 或 Edge");
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "zh-CN";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.onstart = () => setVoiceState("你可以慢慢说", true);
+      recognition.onerror = () => {
+        listening = false;
+        setVoiceState("没有听清 可以再试一次", false);
+      };
+      recognition.onend = () => {
+        if (listening) recognition.start();
+      };
+      recognition.onresult = async (event) => {
+        const text = event.results?.[0]?.[0]?.transcript?.trim();
+        if (!text) return;
+        listening = false;
+        recognition.stop();
+        try {
+          await askDeepSeek(text);
+        } catch (error) {
+          console.error(error);
+          setVoiceState("连接失败 请确认 DeepSeek Key 和部署设置");
+        }
+      };
+      listening = true;
+      recognition.start();
+    }
+
+    talkButton?.addEventListener("click", () => {
+      if (speaking || window.speechSynthesis?.speaking) {
+        stopSpeechReply();
+        return;
+      }
+      if (listening) {
+        stopVoiceAgent();
+        return;
+      }
+      startVoiceAgent();
+    });
+
+    const bind = (id, textId, suffix, callback) => {
+      const input = document.getElementById(id);
+      const text = document.getElementById(textId);
+      const update = () => {
+        text.textContent = input.value + suffix;
+        callback?.();
+      };
+      input.addEventListener("input", update);
+      update();
+    };
+
+    const updateCenter = () => {
+      document.getElementById("centerValue").textContent =
+        `${document.getElementById("centerTemp").value}°C · ${document.getElementById("centerVibe").value}级`;
+    };
+    const updateWing = () => {
+      document.getElementById("wingValue").textContent =
+        `松紧 ${document.getElementById("tight").value} · ${document.getElementById("wingTemp").value}°C`;
+    };
+    const updateLube = () => {
+      document.getElementById("lubeValue").textContent =
+        `缓释 ${document.getElementById("lube").value}级`;
+    };
+
+    bind("centerTemp", "centerTempText", "°C", updateCenter);
+    bind("centerVibe", "centerVibeText", "级", updateCenter);
+    bind("lube", "lubeText", "级", updateLube);
+    bind("tight", "tightText", "级", updateWing);
+    bind("wingVibe", "wingVibeText", "级", updateWing);
+    bind("wingTemp", "wingTempText", "°C", updateWing);
+    const breathButton = document.getElementById("breathButton");
+    const meditationButton = document.getElementById("meditationButton");
+    const breathCircle = document.getElementById("breathCircle");
+    const breathState = document.getElementById("breathState");
+    let breathActive = false;
+    let meditationActive = false;
+    let ambientContext = null;
+    let ambientNodes = [];
+
+    function stopAmbient() {
+      meditationActive = false;
+      if (meditationButton) meditationButton.textContent = "播放冥想";
+      window.speechSynthesis?.cancel();
+      ambientNodes.forEach((node) => {
+        try {
+          if (typeof node.stop === "function") node.stop();
+          node.disconnect?.();
+        } catch {
+          // Already stopped.
+        }
+      });
+      ambientNodes = [];
+      ambientContext?.close();
+      ambientContext = null;
+    }
+
+    function startAmbient() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      ambientContext = new AudioContext();
+      const master = ambientContext.createGain();
+      master.gain.value = 0.16;
+      master.connect(ambientContext.destination);
+      ambientNodes.push(master);
+
+      const chords = [
+        [261.63, 329.63, 392.00],
+        [293.66, 349.23, 440.00],
+        [246.94, 329.63, 392.00],
+        [220.00, 277.18, 349.23]
+      ];
+      const now = ambientContext.currentTime;
+      const chordLength = 4;
+      chords.forEach((notes, chordIndex) => {
+        notes.forEach((freq, noteIndex) => {
+          const osc = ambientContext.createOscillator();
+          const gain = ambientContext.createGain();
+          osc.type = "sine";
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, now + chordIndex * chordLength);
+          gain.gain.linearRampToValueAtTime(0.065 / (noteIndex + 1), now + chordIndex * chordLength + 1.2);
+          gain.gain.linearRampToValueAtTime(0.012, now + (chordIndex + 1) * chordLength + 0.4);
+          osc.connect(gain);
+          gain.connect(master);
+          osc.start(now + chordIndex * chordLength);
+          osc.stop(now + (chordIndex + 1) * chordLength + 0.6);
+          ambientNodes.push(osc, gain);
+        });
+      });
+
+      const lfo = ambientContext.createOscillator();
+      const lfoGain = ambientContext.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.08;
+      lfoGain.gain.value = 0.045;
+      lfo.connect(lfoGain);
+      lfoGain.connect(master.gain);
+      lfo.start(now);
+      ambientNodes.push(lfo, lfoGain);
+
+      const stopTimer = window.setTimeout(() => {
+        if (meditationActive) stopAmbient();
+      }, chords.length * chordLength * 1000 + 1200);
+      ambientNodes.push({ stop: () => clearTimeout(stopTimer), disconnect: () => {} });
+    }
+
+    breathButton?.addEventListener("click", () => {
+      breathActive = !breathActive;
+      breathCircle.classList.toggle("active", breathActive);
+      breathButton.textContent = breathActive ? "停止呼吸" : "开始呼吸";
+      breathState.textContent = breathActive ? "进行中" : "未开始";
+      breathCircle.textContent = breathActive ? "吸  停  呼" : "呼吸";
+      if (breathActive) logEvent("body", "breath");
+    });
+
+    meditationButton?.addEventListener("click", () => {
+      if (meditationActive) {
+        stopAmbient();
+        return;
+      }
+      meditationActive = true;
+      meditationButton.textContent = "停止音频";
+      logEvent("body", "meditation");
+      startAmbient();
+    });
+
+    updateInsight();
+  </script>
+<script>
+  (() => {
+    const moodWords = ["疲惫", "紧张", "低落", "想靠近", "安静", "敏感", "好奇", "需要独处"];
+    const isQuietMobile = () => window.matchMedia("(max-width: 700px), (pointer: coarse)").matches;
+    const layout = [
+      { x: 0.16, y: 0.18, r: 35 },
+      { x: 0.47, y: 0.11, r: 33 },
+      { x: 0.76, y: 0.20, r: 34 },
+      { x: 0.29, y: 0.43, r: 38 },
+      { x: 0.64, y: 0.43, r: 34 },
+      { x: 0.14, y: 0.69, r: 33 },
+      { x: 0.49, y: 0.75, r: 34 },
+      { x: 0.78, y: 0.68, r: 40 }
+    ];
+
+    const getMoodButtons = () => Array.from(document.querySelectorAll("button"))
+      .filter((button) => moodWords.includes(button.textContent.trim()));
+
+    const stopBubbleMotion = () => {
+      if (!isQuietMobile()) return;
+      const buttons = getMoodButtons();
+      if (!buttons.length) return;
+
+      const container = buttons[0].parentElement;
+      if (!container) return;
+      container.style.position = "relative";
+      container.style.minHeight = "285px";
+      container.style.touchAction = "none";
+
+      const bounds = () => {
+        const rect = container.getBoundingClientRect();
+        return {
+          width: Math.max(rect.width, 280),
+          height: Math.max(rect.height, 285)
+        };
+      };
+
+      const state = buttons.map((button, index) => {
+        const box = bounds();
+        const item = layout[index % layout.length];
+        const r = item.r;
+        const current = {
+          button,
+          r,
+          x: item.x * box.width,
+          y: item.y * box.height,
+          dragging: false
+        };
+        button.style.position = "absolute";
+        button.style.width = `${r * 2}px`;
+        button.style.height = `${r * 2}px`;
+        button.style.left = `${current.x - r}px`;
+        button.style.top = `${current.y - r}px`;
+        button.style.transform = "none";
+        button.style.animation = "none";
+        button.style.transition = "left 260ms ease, top 260ms ease, box-shadow 220ms ease, border-color 220ms ease";
+        button.style.touchAction = "none";
+        return current;
+      });
+
+      const paint = () => {
+        const box = bounds();
+        state.forEach((item) => {
+          item.x = Math.min(Math.max(item.x, item.r + 4), box.width - item.r - 4);
+          item.y = Math.min(Math.max(item.y, item.r + 4), box.height - item.r - 4);
+          item.button.style.left = `${item.x - item.r}px`;
+          item.button.style.top = `${item.y - item.r}px`;
+          item.button.style.transform = "none";
+        });
+      };
+
+      const repel = (active) => {
+        for (let loop = 0; loop < 4; loop += 1) {
+          state.forEach((other) => {
+            if (other === active) return;
+            const dx = other.x - active.x;
+            const dy = other.y - active.y;
+            const distance = Math.max(Math.hypot(dx, dy), 0.01);
+            const minDistance = active.r + other.r + 8;
+            if (distance >= minDistance) return;
+            const push = (minDistance - distance) * 0.52;
+            other.x += (dx / distance) * push;
+            other.y += (dy / distance) * push;
+          });
+        }
+        paint();
+      };
+
+      state.forEach((item) => {
+        if (item.button.dataset.quietMobileBubble === "true") return;
+        item.button.dataset.quietMobileBubble = "true";
+
+        item.button.addEventListener("pointerdown", (event) => {
+          if (!isQuietMobile()) return;
+          item.dragging = true;
+          item.button.setPointerCapture?.(event.pointerId);
+          item.button.style.transition = "box-shadow 160ms ease, border-color 160ms ease";
+          item.button.style.zIndex = "8";
+        });
+
+        item.button.addEventListener("pointermove", (event) => {
+          if (!item.dragging || !isQuietMobile()) return;
+          const rect = container.getBoundingClientRect();
+          item.x = event.clientX - rect.left;
+          item.y = event.clientY - rect.top;
+          repel(item);
+        });
+
+        const release = (event) => {
+          if (!item.dragging) return;
+          item.dragging = false;
+          item.button.releasePointerCapture?.(event.pointerId);
+          item.button.style.transition = "left 220ms ease, top 220ms ease, box-shadow 180ms ease, border-color 180ms ease";
+          item.button.style.zIndex = "";
+          repel(item);
+          window.setTimeout(paint, 80);
+        };
+
+        item.button.addEventListener("pointerup", release);
+        item.button.addEventListener("pointercancel", release);
+      });
+
+      paint();
+      window.setTimeout(paint, 120);
+      window.addEventListener("resize", paint, { passive: true });
+
+      window.setInterval(() => {
+        if (!isQuietMobile()) return;
+        if (state.some((item) => item.dragging)) return;
+        paint();
+      }, 700);
+    };
+
+    window.addEventListener("load", stopBubbleMotion);
+    window.addEventListener("hashchange", () => window.setTimeout(stopBubbleMotion, 80));
+    document.addEventListener("click", () => window.setTimeout(stopBubbleMotion, 80), true);
+  })();
+</script>
+<style>
+  .sensing-feedback-card {
+    width: min(86vw, 360px);
+    margin: 14px auto 0;
+    padding: 16px 16px 14px;
+    border: 1px solid rgba(196, 178, 158, 0.28);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.36);
+    box-shadow: 0 18px 50px rgba(176, 149, 128, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    color: rgba(83, 70, 62, 0.86);
+  }
+
+  .sensing-feedback-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+
+  .sensing-feedback-title {
+    font-family: var(--font-title, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif);
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    color: rgba(72, 60, 54, 0.9);
+  }
+
+  .sensing-feedback-sync {
+    min-height: 28px;
+    padding: 0 12px;
+    border: 1px solid rgba(186, 163, 145, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.24);
+    color: rgba(91, 74, 65, 0.74);
+    font-family: var(--font-body, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+  }
+
+  .sensing-feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 10px 0 12px;
+  }
+
+  .sensing-feedback-metric {
+    padding: 10px 10px 9px;
+    border: 1px solid rgba(203, 183, 167, 0.2);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.24);
+  }
+
+  .sensing-feedback-label {
+    font-family: var(--font-body, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    color: rgba(107, 89, 78, 0.62);
+  }
+
+  .sensing-feedback-value {
+    margin-top: 6px;
+    font-family: var(--font-en, "Inter", "Helvetica Neue", Arial, sans-serif);
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: rgba(74, 61, 54, 0.86);
+  }
+
+  .sensing-feedback-bar {
+    height: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(191, 170, 151, 0.16);
+  }
+
+  .sensing-feedback-fill {
+    display: block;
+    height: 100%;
+    width: var(--value, 50%);
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(232, 196, 172, 0.72), rgba(188, 210, 207, 0.72));
+    transition: width 520ms ease;
+  }
+
+  .sensing-feedback-copy {
+    margin: 8px 2px 0;
+    font-family: var(--font-title, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif);
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.9;
+    letter-spacing: 0.08em;
+    color: rgba(83, 70, 62, 0.74);
+  }
+
+  .sensing-feedback-note {
+    margin-top: 9px;
+    font-family: var(--font-body, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: 0.08em;
+    color: rgba(112, 94, 82, 0.48);
+  }
+
+  @media (max-width: 420px) {
+    .sensing-feedback-card {
+      width: min(90vw, 330px);
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 20px;
+    }
+
+    .sensing-feedback-grid {
+      gap: 8px;
+    }
+
+    .sensing-feedback-value {
+      font-size: 16px;
+    }
+  }
+</style>
+<script>
+  (() => {
+    const demoSamples = [
+      { fit: 86, breath: 72, warmth: 36.8, ease: 64, pressure: 31 },
+      { fit: 91, breath: 78, warmth: 37.1, ease: 71, pressure: 28 },
+      { fit: 82, breath: 67, warmth: 36.6, ease: 58, pressure: 36 }
+    ];
+    let sampleIndex = 0;
+
+    const clamp = (value, min, max) => Math.min(Math.max(Number(value) || 0, min), max);
+    const percent = (value) => `${Math.round(clamp(value, 0, 100))}%`;
+
+    const buildFeedback = (data) => {
+      const fit = clamp(data.fit, 0, 100);
+      const breath = clamp(data.breath, 0, 100);
+      const ease = clamp(data.ease, 0, 100);
+      const warmth = clamp(data.warmth, 30, 40);
+      const pressure = clamp(data.pressure, 0, 100);
+
+      if (fit >= 88 && breath >= 74 && ease >= 68) {
+        return "身体正在进入比较稳定的节律  可以继续保持轻柔的呼吸";
+      }
+      if (pressure > 34 || fit < 84) {
+        return "贴合处有一点压力波动  可以稍微放松双翼的角度";
+      }
+      if (warmth < 36.7) {
+        return "温度仍在慢慢靠近舒适区  可以给身体一点时间";
+      }
+      if (breath < 70) {
+        return "呼吸节律还在寻找平衡  试着把呼气留得更长一点";
+      }
+      return "现在的状态偏柔和稳定  适合继续短时感知练习";
+    };
+
+    const metric = (label, value, fill) => `
+      <div class="sensing-feedback-metric">
+        <div class="sensing-feedback-label">${label}</div>
+        <div class="sensing-feedback-value">${value}</div>
+        <div class="sensing-feedback-bar"><span class="sensing-feedback-fill" style="--value:${fill}"></span></div>
+      </div>
+    `;
+
+    const renderFeedback = (root, data) => {
+      const normalized = {
+        fit: clamp(data.fit, 0, 100),
+        breath: clamp(data.breath, 0, 100),
+        warmth: clamp(data.warmth, 30, 40),
+        ease: clamp(data.ease, 0, 100),
+        pressure: clamp(data.pressure, 0, 100)
+      };
+
+      root.innerHTML = `
+        <div class="sensing-feedback-head">
+          <div class="sensing-feedback-title">感知反馈</div>
+          <button class="sensing-feedback-sync" type="button">同步</button>
+        </div>
+        <div class="sensing-feedback-grid">
+          ${metric("贴合稳定", percent(normalized.fit), percent(normalized.fit))}
+          ${metric("呼吸节律", percent(normalized.breath), percent(normalized.breath))}
+          ${metric("温度感知", `${normalized.warmth.toFixed(1)}℃`, percent((normalized.warmth - 34) * 18))}
+          ${metric("放松趋势", percent(normalized.ease), percent(normalized.ease))}
+        </div>
+        <div class="sensing-feedback-copy">${buildFeedback(normalized)}</div>
+        <div class="sensing-feedback-note">示例数据来自硬件可采集的贴合压力 温度 使用时长 震动响应和呼吸节律</div>
+      `;
+
+      root.querySelector(".sensing-feedback-sync")?.addEventListener("click", () => {
+        sampleIndex = (sampleIndex + 1) % demoSamples.length;
+        renderFeedback(root, demoSamples[sampleIndex]);
+      });
+    };
+
+    const findBodySensingPage = () => {
+      const candidates = Array.from(document.querySelectorAll("section, main, .page, .screen, [data-page], [data-screen], body > div"));
+      return candidates
+        .filter((item) => item.textContent && item.textContent.includes("身体感知"))
+        .sort((a, b) => a.textContent.length - b.textContent.length)[0];
+    };
+
+    const mountFeedback = () => {
+      const page = findBodySensingPage();
+      if (!page || page.querySelector(".sensing-feedback-card")) return;
+
+      const card = document.createElement("div");
+      card.className = "sensing-feedback-card";
+      card.setAttribute("aria-label", "感知反馈");
+
+      const anchors = Array.from(page.querySelectorAll("button, .breath, .meditation, audio, canvas, svg, div"))
+        .filter((item) => item.textContent && (item.textContent.includes("冥想") || item.textContent.includes("呼吸")));
+      const anchor = anchors[anchors.length - 1];
+      if (anchor?.parentElement && anchor.parentElement !== page) {
+        anchor.parentElement.insertAdjacentElement("afterend", card);
+      } else {
+        page.appendChild(card);
+      }
+
+      renderFeedback(card, demoSamples[0]);
+    };
+
+    window.updateBodySensingFeedback = (hardwareData = {}) => {
+      mountFeedback();
+      const card = document.querySelector(".sensing-feedback-card");
+      if (!card) return;
+      renderFeedback(card, { ...demoSamples[0], ...hardwareData });
+    };
+
+    window.addEventListener("load", () => window.setTimeout(mountFeedback, 120));
+    document.addEventListener("click", () => window.setTimeout(mountFeedback, 120), true);
+    window.addEventListener("hashchange", () => window.setTimeout(mountFeedback, 120));
+  })();
+</script>
+<style>
+  .mood-still-layout {
+    position: relative !important;
+    min-height: clamp(265px, 34vh, 325px) !important;
+    width: min(92vw, 390px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow: visible !important;
+    margin-bottom: 22px !important;
+  }
+
+  .mood-still-bubble {
+    position: absolute !important;
+    border-radius: 999px !important;
+    transform: none !important;
+    animation: none !important;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease !important;
+    touch-action: manipulation !important;
+  }
+</style>
+<script>
+  (() => {
+    const moodWords = ["疲惫", "紧张", "低落", "想靠近", "安静", "敏感", "好奇", "需要独处"];
+    const layout = [
+      { x: 0.20, y: 0.15, r: 31 },
+      { x: 0.50, y: 0.08, r: 30 },
+      { x: 0.80, y: 0.15, r: 31 },
+      { x: 0.26, y: 0.39, r: 34 },
+      { x: 0.64, y: 0.37, r: 31 },
+      { x: 0.20, y: 0.63, r: 30 },
+      { x: 0.50, y: 0.70, r: 31 },
+      { x: 0.80, y: 0.62, r: 35 }
+    ];
+
+    const buttons = () => Array.from(document.querySelectorAll("button"))
+      .filter((button) => moodWords.includes(button.textContent.trim()));
+
+    const lockMoodBubbles = () => {
+      const moodButtons = buttons();
+      if (!moodButtons.length) return;
+
+      const container = moodButtons[0].parentElement;
+      if (!container) return;
+      container.classList.add("mood-still-layout");
+
+      const rect = container.getBoundingClientRect();
+      const width = Math.max(rect.width || 0, Math.min(window.innerWidth * 0.92, 390), 300);
+      const height = Math.max(rect.height || 0, 285);
+      const scale = width < 340 ? 0.86 : 1;
+      const usedWidth = width * 0.92;
+      const offsetX = (width - usedWidth) / 2 - width * 0.025;
+
+      moodButtons.forEach((button, index) => {
+        const item = layout[index % layout.length];
+        const radius = item.r * scale;
+        const x = Math.min(Math.max(offsetX + item.x * usedWidth, radius + 6), width - radius - 6);
+        const y = Math.min(Math.max(item.y * height, radius + 6), height - radius - 6);
+
+        button.classList.add("mood-still-bubble");
+        button.style.setProperty("width", `${radius * 2}px`, "important");
+        button.style.setProperty("height", `${radius * 2}px`, "important");
+        button.style.setProperty("left", `${x - radius}px`, "important");
+        button.style.setProperty("top", `${y - radius}px`, "important");
+        button.style.setProperty("right", "auto", "important");
+        button.style.setProperty("bottom", "auto", "important");
+        button.style.setProperty("margin", "0", "important");
+        button.style.setProperty("transform", "none", "important");
+        button.style.setProperty("animation", "none", "important");
+      });
+    };
+
+    let lockTimer = null;
+    const scheduleLock = () => {
+      window.clearTimeout(lockTimer);
+      lockTimer = window.setTimeout(lockMoodBubbles, 60);
+    };
+
+    window.addEventListener("load", () => {
+      lockMoodBubbles();
+      window.setInterval(lockMoodBubbles, 300);
+    });
+    window.addEventListener("resize", scheduleLock, { passive: true });
+    window.addEventListener("hashchange", scheduleLock);
+    document.addEventListener("click", scheduleLock, true);
+    document.addEventListener("pointerup", scheduleLock, true);
+  })();
+</script>
+<script>
+  (() => {
+    if (!window.speechSynthesis || window.__butterflySoftVoice) return;
+
+    const preferredVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const softNames = [
+        "xiaoxiao", "xiaoyi", "tingting", "mei-jia", "sin-ji",
+        "google 普通话", "google 國語", "mandarin", "putonghua", "chinese"
+      ];
+      return voices.find((voice) => {
+        const name = `${voice.name} ${voice.lang}`.toLowerCase();
+        return softNames.some((keyword) => name.includes(keyword));
+      }) || voices.find((voice) => /zh|cmn|mandarin|chinese/i.test(`${voice.lang} ${voice.name}`)) || voices[0] || null;
+    };
+
+    const nativeSpeak = window.speechSynthesis.speak.bind(window.speechSynthesis);
+    window.speechSynthesis.speak = (utterance) => {
+      if (utterance instanceof SpeechSynthesisUtterance) {
+        utterance.lang = "zh-CN";
+        utterance.voice = preferredVoice();
+        utterance.rate = 0.78;
+        utterance.pitch = 1.08;
+        utterance.volume = 0.82;
+      }
+      nativeSpeak(utterance);
+    };
+
+    window.speechSynthesis.onvoiceschanged = () => preferredVoice();
+    window.__butterflySoftVoice = true;
+  })();
+</script>
+<style>
+  .mood-restored-layout {
+    position: relative !important;
+    width: min(90vw, 390px) !important;
+    min-height: 330px !important;
+    margin: 8px auto 12px !important;
+    overflow: visible !important;
+  }
+
+  .mood-restored-layout .mood-still-bubble,
+  .mood-restored-bubble {
+    position: absolute !important;
+    border-radius: 999px !important;
+    transform: none !important;
+    animation: none !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow:
+      inset 0 0 18px rgba(255, 255, 255, 0.42),
+      0 12px 34px rgba(176, 149, 128, 0.1) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    touch-action: manipulation !important;
+  }
+</style>
+<script>
+  (() => {
+    const moodWords = ["疲惫", "紧张", "低落", "想靠近", "安静", "敏感", "好奇", "需要独处"];
+    const restoredLayout = [
+      { x: 0.17, y: 0.19, r: 35 },
+      { x: 0.48, y: 0.10, r: 33 },
+      { x: 0.78, y: 0.21, r: 34 },
+      { x: 0.28, y: 0.45, r: 38 },
+      { x: 0.64, y: 0.42, r: 34 },
+      { x: 0.16, y: 0.70, r: 33 },
+      { x: 0.49, y: 0.76, r: 34 },
+      { x: 0.80, y: 0.68, r: 40 }
+    ];
+
+    const getMoodButtons = () => Array.from(document.querySelectorAll("button"))
+      .filter((button) => moodWords.includes(button.textContent.trim()));
+
+    const restoreMoodBubbles = () => {
+      const bubbles = getMoodButtons();
+      if (!bubbles.length) return;
+
+      const container = bubbles[0].parentElement;
+      if (!container) return;
+
+      container.classList.remove("mood-still-layout");
+      container.classList.add("mood-restored-layout");
+      container.style.setProperty("position", "relative", "important");
+      container.style.setProperty("width", "min(90vw, 390px)", "important");
+      container.style.setProperty("min-height", "330px", "important");
+      container.style.setProperty("margin", "8px auto 12px", "important");
+
+      const width = Math.min(Math.max(container.getBoundingClientRect().width || 360, 300), 390);
+      const height = Math.max(container.getBoundingClientRect().height || 330, 330);
+      const scale = width < 340 ? 0.9 : 1;
+
+      bubbles.forEach((button, index) => {
+        const item = restoredLayout[index % restoredLayout.length];
+        const radius = item.r * scale;
+        const x = Math.min(Math.max(item.x * width, radius + 6), width - radius - 6);
+        const y = Math.min(Math.max(item.y * height, radius + 6), height - radius - 6);
+
+        button.classList.remove("mood-still-bubble");
+        button.classList.add("mood-restored-bubble");
+        button.style.setProperty("width", `${radius * 2}px`, "important");
+        button.style.setProperty("height", `${radius * 2}px`, "important");
+        button.style.setProperty("left", `${x - radius}px`, "important");
+        button.style.setProperty("top", `${y - radius}px`, "important");
+        button.style.setProperty("right", "auto", "important");
+        button.style.setProperty("bottom", "auto", "important");
+        button.style.setProperty("margin", "0", "important");
+        button.style.setProperty("transform", "none", "important");
+        button.style.setProperty("animation", "none", "important");
+      });
+    };
+
+    window.addEventListener("load", () => {
+      restoreMoodBubbles();
+      window.setInterval(restoreMoodBubbles, 120);
+    });
+    window.addEventListener("resize", restoreMoodBubbles, { passive: true });
+    window.addEventListener("hashchange", () => window.setTimeout(restoreMoodBubbles, 80));
+    document.addEventListener("click", () => window.setTimeout(restoreMoodBubbles, 80), true);
+  })();
+</script>
+<script>
+  (() => {
+    const moodWords = ["疲惫", "紧张", "低落", "想靠近", "安静", "敏感", "好奇", "需要独处"];
+    const fixedLayout = [
+      { x: 0.17, y: 0.19, r: 35 },
+      { x: 0.48, y: 0.10, r: 33 },
+      { x: 0.78, y: 0.21, r: 34 },
+      { x: 0.28, y: 0.45, r: 38 },
+      { x: 0.64, y: 0.42, r: 34 },
+      { x: 0.16, y: 0.70, r: 33 },
+      { x: 0.49, y: 0.76, r: 34 },
+      { x: 0.80, y: 0.68, r: 40 }
+    ];
+
+    const getMoodButtons = () => Array.from(document.querySelectorAll("button"))
+      .filter((button) => moodWords.includes(button.textContent.trim()));
+
+    const freezeMoodBubbles = () => {
+      const bubbles = getMoodButtons();
+      if (!bubbles.length) return;
+
+      const container = bubbles[0].parentElement;
+      if (!container) return;
+
+      container.style.setProperty("position", "relative", "important");
+      container.style.setProperty("width", "min(90vw, 390px)", "important");
+      container.style.setProperty("min-height", "330px", "important");
+      container.style.setProperty("margin", "8px auto 12px", "important");
+      container.style.setProperty("overflow", "visible", "important");
+
+      const width = Math.min(Math.max(container.getBoundingClientRect().width || 360, 300), 390);
+      const height = Math.max(container.getBoundingClientRect().height || 330, 330);
+      const scale = width < 340 ? 0.9 : 1;
+
+      bubbles.forEach((button, index) => {
+        const item = fixedLayout[index % fixedLayout.length];
+        const radius = item.r * scale;
+        const x = Math.min(Math.max(item.x * width, radius + 6), width - radius - 6);
+        const y = Math.min(Math.max(item.y * height, radius + 6), height - radius - 6);
+
+        button.style.setProperty("position", "absolute", "important");
+        button.style.setProperty("width", `${radius * 2}px`, "important");
+        button.style.setProperty("height", `${radius * 2}px`, "important");
+        button.style.setProperty("left", `${x - radius}px`, "important");
+        button.style.setProperty("top", `${y - radius}px`, "important");
+        button.style.setProperty("right", "auto", "important");
+        button.style.setProperty("bottom", "auto", "important");
+        button.style.setProperty("margin", "0", "important");
+        button.style.setProperty("transform", "none", "important");
+        button.style.setProperty("translate", "none", "important");
+        button.style.setProperty("animation", "none", "important");
+        button.style.setProperty("transition", "background 180ms ease, border-color 180ms ease, box-shadow 180ms ease", "important");
+        button.style.setProperty("will-change", "auto", "important");
+        button.style.setProperty("touch-action", "manipulation", "important");
+      });
+    };
+
+    const stopBubbleDragging = (event) => {
+      const target = event.target?.closest?.("button");
+      if (target && moodWords.includes(target.textContent.trim()) && event.type === "pointermove") {
+        event.stopImmediatePropagation();
+      }
+    };
+
+    let rafId = null;
+    const loop = () => {
+      freezeMoodBubbles();
+      rafId = window.requestAnimationFrame(loop);
+    };
+
+    document.addEventListener("pointermove", stopBubbleDragging, true);
+    window.addEventListener("load", () => {
+      window.cancelAnimationFrame(rafId);
+      loop();
+    });
+    window.addEventListener("resize", freezeMoodBubbles, { passive: true });
+    window.addEventListener("hashchange", () => window.setTimeout(freezeMoodBubbles, 80));
+    document.addEventListener("click", () => window.setTimeout(freezeMoodBubbles, 30), true);
+  })();
+</script>
+<style>
+  .guide-modules-fixed {
+    width: min(88vw, 340px) !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin: 10px auto 16px !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .guide-modules-fixed button {
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 10px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.22em !important;
+    white-space: nowrap !important;
+  }
+
+  .guide-page-scroll-safe {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    justify-content: flex-start !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  @media (max-height: 740px) {
+    .guide-modules-fixed {
+      gap: 8px !important;
+      margin-top: 6px !important;
+      margin-bottom: 10px !important;
+    }
+
+    .guide-modules-fixed button {
+      min-height: 38px !important;
+      height: 38px !important;
+      font-size: 11px !important;
+    }
+  }
+</style>
+<script>
+  (() => {
+    const moduleWords = ["AI聊聊", "情绪追踪", "身体感知", "体验模式"];
+
+    const getModuleButtons = () => Array.from(document.querySelectorAll("button"))
+      .filter((button) => moduleWords.includes(button.textContent.trim()));
+
+    const fitGuideModules = () => {
+      const buttons = getModuleButtons();
+      if (buttons.length < 4) return;
+
+      const container = buttons[0].parentElement;
+      if (!container) return;
+      container.classList.add("guide-modules-fixed");
+
+      const page = Array.from(document.querySelectorAll("section, main, .page, .screen, [data-page], [data-screen], body > div"))
+        .filter((item) => item.textContent && item.textContent.includes("今天你想和你的身体聊聊吗"))
+        .sort((a, b) => a.textContent.length - b.textContent.length)[0];
+
+      page?.classList.add("guide-page-scroll-safe");
+
+      buttons.forEach((button) => {
+        button.style.setProperty("min-height", window.innerHeight < 740 ? "38px" : "42px", "important");
+        button.style.setProperty("height", window.innerHeight < 740 ? "38px" : "42px", "important");
+      });
+    };
+
+    window.addEventListener("load", () => {
+      fitGuideModules();
+      window.setInterval(fitGuideModules, 400);
+    });
+    window.addEventListener("resize", fitGuideModules, { passive: true });
+    window.addEventListener("hashchange", () => window.setTimeout(fitGuideModules, 80));
+    document.addEventListener("click", () => window.setTimeout(fitGuideModules, 80), true);
+  })();
+</script>
+<script>
+  (() => {
+    const isBodySensingNode = (node) => {
+      if (!node?.textContent) return false;
+      const text = node.textContent;
+      return text.includes("身体感知") && (text.includes("呼吸") || text.includes("冥想"));
+    };
+
+    const cleanMisplacedSensingFeedback = () => {
+      document.querySelectorAll(".sensing-feedback-card").forEach((card) => {
+        const host = card.closest("section, main, .page, .screen, [data-page], [data-screen], body > div") || card.parentElement;
+        if (!isBodySensingNode(host)) {
+          card.remove();
+        }
+      });
+    };
+
+    const remountOnlyInsideBodySensing = () => {
+      cleanMisplacedSensingFeedback();
+      const pages = Array.from(document.querySelectorAll("section, main, .page, .screen, [data-page], [data-screen], body > div"));
+      const bodyPage = pages
+        .filter(isBodySensingNode)
+        .sort((a, b) => a.textContent.length - b.textContent.length)[0];
+
+      if (!bodyPage) return;
+      const card = document.querySelector(".sensing-feedback-card");
+      if (card && !bodyPage.contains(card)) {
+        bodyPage.appendChild(card);
+      }
+    };
+
+    window.addEventListener("load", () => {
+      remountOnlyInsideBodySensing();
+      window.setInterval(remountOnlyInsideBodySensing, 500);
+    });
+    window.addEventListener("hashchange", () => window.setTimeout(remountOnlyInsideBodySensing, 80));
+    document.addEventListener("click", () => window.setTimeout(remountOnlyInsideBodySensing, 80), true);
+  })();
+</script>
+<script>
+  (() => {
+    const samples = [
+      { fit: 86, breath: 72, warmth: 36.8, ease: 64, pressure: 31 },
+      { fit: 91, breath: 78, warmth: 37.1, ease: 71, pressure: 28 },
+      { fit: 82, breath: 67, warmth: 36.6, ease: 58, pressure: 36 }
+    ];
+    let index = 0;
+
+    const clamp = (value, min, max) => Math.min(Math.max(Number(value) || 0, min), max);
+    const pct = (value) => `${Math.round(clamp(value, 0, 100))}%`;
+    const isVisible = (node) => {
+      if (!node) return false;
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return style.display !== "none"
+        && style.visibility !== "hidden"
+        && Number(style.opacity || 1) > 0.01
+        && rect.width > 20
+        && rect.height > 20
+        && rect.bottom > 0
+        && rect.top < window.innerHeight;
+    };
+
+    const bodyPage = () => Array.from(document.querySelectorAll("section, main, .page, .screen, [data-page], [data-screen], body > div"))
+      .filter((node) => {
+        const text = node.textContent || "";
+        return text.includes("身体感知")
+          && (text.includes("呼吸") || text.includes("冥想"))
+          && isVisible(node);
+      })
+      .sort((a, b) => a.textContent.length - b.textContent.length)[0] || null;
+
+    const feedbackText = (data) => {
+      if (data.fit >= 88 && data.breath >= 74 && data.ease >= 68) {
+        return "身体正在进入比较稳定的节律  可以继续保持轻柔的呼吸";
+      }
+      if (data.pressure > 34 || data.fit < 84) {
+        return "贴合处有一点压力波动  可以稍微放松双翼的角度";
+      }
+      if (data.warmth < 36.7) {
+        return "温度仍在慢慢靠近舒适区  可以给身体一点时间";
+      }
+      if (data.breath < 70) {
+        return "呼吸节律还在寻找平衡  试着把呼气留得更长一点";
+      }
+      return "现在的状态偏柔和稳定  适合继续短时感知练习";
+    };
+
+    const metric = (label, value, fill) => `
+      <div class="sensing-feedback-metric">
+        <div class="sensing-feedback-label">${label}</div>
+        <div class="sensing-feedback-value">${value}</div>
+        <div class="sensing-feedback-bar"><span class="sensing-feedback-fill" style="--value:${fill}"></span></div>
+      </div>
+    `;
+
+    const render = (card, input) => {
+      const data = {
+        fit: clamp(input.fit, 0, 100),
+        breath: clamp(input.breath, 0, 100),
+        warmth: clamp(input.warmth, 30, 40),
+        ease: clamp(input.ease, 0, 100),
+        pressure: clamp(input.pressure, 0, 100)
+      };
+
+      card.innerHTML = `
+        <div class="sensing-feedback-head">
+          <div class="sensing-feedback-title">感知反馈</div>
+          <button class="sensing-feedback-sync" type="button">同步</button>
+        </div>
+        <div class="sensing-feedback-grid">
+          ${metric("贴合稳定", pct(data.fit), pct(data.fit))}
+          ${metric("呼吸节律", pct(data.breath), pct(data.breath))}
+          ${metric("温度感知", `${data.warmth.toFixed(1)}℃`, pct((data.warmth - 34) * 18))}
+          ${metric("放松趋势", pct(data.ease), pct(data.ease))}
+        </div>
+        <div class="sensing-feedback-copy">${feedbackText(data)}</div>
+        <div class="sensing-feedback-note">示例数据来自硬件可采集的贴合压力 温度 使用时长 震动响应和呼吸节律</div>
+      `;
+
+      card.querySelector(".sensing-feedback-sync")?.addEventListener("click", () => {
+        index = (index + 1) % samples.length;
+        render(card, samples[index]);
+      });
+    };
+
+    const enforceSingleFeedback = () => {
+      const page = bodyPage();
+      const cards = Array.from(document.querySelectorAll(".sensing-feedback-card"));
+
+      if (!page) {
+        cards.forEach((card) => card.remove());
+        return;
+      }
+
+      let keeper = cards.find((card) => card.dataset.finalBodySensing === "true") || cards[0];
+      cards.forEach((card) => {
+        if (card !== keeper) card.remove();
+      });
+
+      if (!keeper) {
+        keeper = document.createElement("div");
+        keeper.className = "sensing-feedback-card";
+      }
+
+      keeper.dataset.finalBodySensing = "true";
+      keeper.setAttribute("aria-label", "感知反馈");
+
+      if (!page.contains(keeper)) {
+        page.appendChild(keeper);
+      }
+
+      if (!keeper.dataset.rendered) {
+        keeper.dataset.rendered = "true";
+        render(keeper, samples[index]);
+      }
+    };
+
+    window.updateBodySensingFeedback = (hardwareData = {}) => {
+      index = 0;
+      enforceSingleFeedback();
+      const card = document.querySelector('.sensing-feedback-card[data-final-body-sensing="true"]');
+      if (card) render(card, { ...samples[0], ...hardwareData });
+    };
+
+    window.addEventListener("load", () => window.setInterval(enforceSingleFeedback, 120));
+    window.addEventListener("hashchange", () => window.setTimeout(enforceSingleFeedback, 40));
+    document.addEventListener("click", () => window.setTimeout(enforceSingleFeedback, 40), true);
+  })();
+</script>
+<script>
+  (() => {
+    if (!window.speechSynthesis || window.__butterflySoftVoiceV2) return;
+
+    const synth = window.speechSynthesis;
+    const speakBase = synth.speak.bind(synth);
+    const cancelBase = synth.cancel.bind(synth);
+    const getBestVoice = () => {
+      const voices = synth.getVoices();
+      const ranked = [
+        "Microsoft Xiaoxiao", "Microsoft Xiaoyi", "Microsoft Yaoyao",
+        "Tingting", "Mei-Jia", "Sin-Ji",
+        "Google 普通话", "Google 國語", "Mandarin", "Chinese"
+      ];
+      return voices.find((voice) => ranked.some((name) => voice.name.includes(name)))
+        || voices.find((voice) => /zh-CN|cmn-Hans|Mandarin|Chinese/i.test(`${voice.lang} ${voice.name}`))
+        || voices[0]
+        || null;
+    };
+
+    const splitSoftly = (text) => String(text || "")
+      .replace(/[，。！？；：、,.!?;:]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(/(?<=.{10,18})\s|(?<=.{16})/u)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    let softTimers = [];
+    const clearSoftTimers = () => {
+      softTimers.forEach((timer) => window.clearTimeout(timer));
+      softTimers = [];
+    };
+
+    synth.cancel = () => {
+      clearSoftTimers();
+      cancelBase();
+    };
+
+    synth.speak = (utterance) => {
+      if (!(utterance instanceof SpeechSynthesisUtterance)) {
+        speakBase(utterance);
+        return;
+      }
+
+      const text = utterance.text || "";
+      const parts = splitSoftly(text);
+      if (parts.length <= 1) {
+        utterance.lang = "zh-CN";
+        utterance.voice = getBestVoice();
+        utterance.rate = 0.68;
+        utterance.pitch = 1.16;
+        utterance.volume = 0.68;
+        speakBase(utterance);
+        return;
+      }
+
+      clearSoftTimers();
+      cancelBase();
+
+      let current = 0;
+      const speakPart = () => {
+        if (current >= parts.length) {
+          utterance.onend?.(new Event("end"));
+          return;
+        }
+
+        const part = new SpeechSynthesisUtterance(parts[current]);
+        part.lang = "zh-CN";
+        part.voice = getBestVoice();
+        part.rate = 0.68;
+        part.pitch = 1.16;
+        part.volume = 0.68;
+        part.onend = () => {
+          current += 1;
+          softTimers.push(window.setTimeout(speakPart, current < parts.length ? 260 : 0));
+        };
+        part.onerror = (event) => utterance.onerror?.(event);
+        speakBase(part);
+      };
+
+      speakPart();
+    };
+
+    synth.onvoiceschanged = () => getBestVoice();
+    window.__butterflySoftVoiceV2 = true;
+  })();
+</script>
+<script>
+  (() => {
+    const renameApp = () => {
+      document.title = "思秋 Aura Autumn";
+      const oldNames = [/蝶翼舒适\s*V1/g, /蝶翼舒适/g];
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walk.nextNode()) nodes.push(walk.currentNode);
+      nodes.forEach((node) => {
+        let text = node.nodeValue;
+        oldNames.forEach((pattern) => {
+          text = text.replace(pattern, "思秋 Aura Autumn");
+        });
+        node.nodeValue = text;
+      });
+    };
+
+    window.addEventListener("load", renameApp);
+    document.addEventListener("click", () => window.setTimeout(renameApp, 40), true);
+    window.addEventListener("hashchange", () => window.setTimeout(renameApp, 40));
+  })();
+</script>
+</body>
+</html>
